@@ -9,8 +9,8 @@ chat: chat.cpp $(OBJMODULES)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 	rm -f *.o
 
-run: main
-	./main
+run: chat
+	./chat
 
 clean:
-	rm -f *.o main
+	rm -f *.o chat
