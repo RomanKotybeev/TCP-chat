@@ -23,6 +23,8 @@ void Client::Handle()
 
 	if (name == 0)
 		ProcessName();
+	else if (buf[0] == '\\')
+		ProcessCmd();
 	else
 		ProcessMsg();
 }
@@ -59,6 +61,13 @@ void Client::ProcessMsg()
 		buf[i] = 0;
 	buf_used = 0;
 	delete[] msg;
+}
+
+void Client::ProcessCmd()
+{
+	if (strcmp(buf, "\\q")) {
+		serv_master->CloseClientSession(this);
+	}
 }
 
 Client::~Client()

@@ -48,6 +48,7 @@ class Client : public FdObj {
 
 	void ProcessName();
 	void ProcessMsg();
+	void ProcessCmd();
 public:
 	Client(Server *s, int sockfd, struct sockaddr_in& addr)
 		: FdObj(sockfd, addr)
