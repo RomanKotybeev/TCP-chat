@@ -72,6 +72,7 @@ void Server::CloseClientSession(Client *c)
 		if ((*pp)->client == c) {
 			Item *tmp = *pp;
 			*pp = tmp->next;
+			selector->Remove(tmp->client);
 			delete tmp->client;
 			delete tmp;
 			return ;
