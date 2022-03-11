@@ -35,3 +35,6 @@ Hello
 Anna has entered the chat
 [Anna] Hi, everyone
 ```
+
+To quit enter the command `\quit` or `\q`. To get the information
+about how many people online enter the command `\info`.
