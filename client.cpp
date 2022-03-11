@@ -5,9 +5,11 @@
 
 char entered_chat[] = " has entered the chat";
 char leaved_chat[] = " has leaved the chat";
+char info_chat[] = "Online: ";
 
 char QUITLONG_CMD[] = "\\quit";
 char QUITSHORT_CMD[] = "\\q";
+char INFOCHAT_CMD[] = "\\info";
 
 
 void Client::Handle()
@@ -25,31 +27,38 @@ void Client::Handle()
 	}
 	buf_used += n;
 
-	if (name == 0)
+	if (name == 0) {
+		CheckLine();
 		ProcessName();
-	else if (buf[0] == '\\')
+	}
+	else if (buf[0] == '\\') {
+		CheckLine();
 		ProcessCmd();
-	else
+	}
+	else {
 		ProcessMsg();
+	}
+	CleanBuffer();
 }
 
-void Client::ProcessName()
+void Client::CheckLine()
 {
 	for (int i = 0; i < buf_used; i++) {
 		if (buf[i] == '\n') {
 			if (i > 0 && buf[i-1] == '\r')
-				buf[i - 1] = 0;
-			name = new char[i];
-			memcpy(name, buf, i);
-			name[i] = 0;
-			name_len = i;
-
-			CleanBuffer();
-
-			SendInfoToChat(entered_chat);
-			return ;
+				i--;
+			buf[i] = 0;
+			buf_used = i;
+			return;
 		}
 	}
+}
+
+void Client::ProcessName()
+{
+	name = new char[buf_used];
+	memcpy(name, buf, buf_used);
+	SendInfoToChat(entered_chat);
 }
 
 void Client::ProcessMsg()
@@ -63,9 +72,15 @@ void Client::ProcessMsg()
 
 void Client::ProcessCmd()
 {
-	if (strcmp(buf, QUITSHORT_CMD) || strcmp(buf, QUITLONG_CMD)) {
+	if (strcmp(buf, QUITSHORT_CMD) == 0 || strcmp(buf, QUITLONG_CMD) == 0) {
 		SendInfoToChat(leaved_chat);
 		serv_master->CloseClientSession(this);
+	} else if (strcmp(buf, INFOCHAT_CMD) == 0) {
+		int n_digits = 3;
+		char *msg = new char[sizeof(info_chat) + n_digits + 2];
+		sprintf(msg, "%s%d\n", info_chat, serv_master->GetNumberClinets());
+		serv_master->Send(this, msg);
+		delete[] msg;
 	}
 }
 
