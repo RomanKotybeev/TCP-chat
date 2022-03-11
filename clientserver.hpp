@@ -46,6 +46,9 @@ class Client : public FdObj {
 
 	Server *serv_master;
 
+	void SendInfoToChat(char *str);
+	void CleanBuffer();
+
 	void ProcessName();
 	void ProcessMsg();
 	void ProcessCmd();

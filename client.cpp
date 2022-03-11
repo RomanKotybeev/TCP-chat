@@ -4,6 +4,10 @@
 #include "clientserver.hpp"
 
 char entered_chat[] = " has entered the chat";
+char leaved_chat[] = " has leaved the chat";
+
+char QUITLONG_CMD[] = "\\quit";
+char QUITSHORT_CMD[] = "\\q";
 
 
 void Client::Handle()
@@ -39,13 +43,10 @@ void Client::ProcessName()
 			memcpy(name, buf, i);
 			name[i] = 0;
 			name_len = i;
-			buf_used = buf_used - i - 1;
-			memmove(buf, buf+i+1, buf_used);
 
-			char *msg = new char[name_len + sizeof(entered_chat) + 2];
-			sprintf(msg, "%s%s\n", name, entered_chat);
-			serv_master->SendAll(msg, this);
-			delete[] msg;
+			CleanBuffer();
+
+			SendInfoToChat(entered_chat);
 			return ;
 		}
 	}
@@ -57,17 +58,30 @@ void Client::ProcessMsg()
 	char *msg = new char[buf_used + name_len + rest_chars];
 	sprintf(msg, "[%s] %s", name, buf);
 	serv_master->SendAll(msg);
-	for (int i = 0; i < buf_used; i++)
-		buf[i] = 0;
-	buf_used = 0;
 	delete[] msg;
 }
 
 void Client::ProcessCmd()
 {
-	if (strcmp(buf, "\\q")) {
+	if (strcmp(buf, QUITSHORT_CMD) || strcmp(buf, QUITLONG_CMD)) {
+		SendInfoToChat(leaved_chat);
 		serv_master->CloseClientSession(this);
 	}
+}
+
+void Client::SendInfoToChat(char *str)
+{
+	char *msg = new char[name_len + sizeof(str) + 2];
+	sprintf(msg, "%s%s\n", name, str);
+	serv_master->SendAll(msg, this);
+	delete[] msg;
+}
+
+void Client::CleanBuffer()
+{
+	for (int i = 0; i < buf_used; i++)
+		buf[i] = 0;
+	buf_used = 0;
 }
 
 Client::~Client()
