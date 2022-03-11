@@ -8,6 +8,7 @@
 enum {
 	BUF_LEN = 1023,
 	QLEN_LISTEN = 16,
+	MAX_CLINETS = 100,
 };
 
 class Client;
@@ -17,20 +18,26 @@ class Server : public FdObj {
 	struct Item {
 		Client *client;
 		Item *next;
-		int n_clients;
 	};
 	Item *head;
+	int n_clients;
 	FILE *log;
 
 	Server(SessionSelector *sel, FILE *f, int sockfd, struct sockaddr_in& addr);
+
 	Client *PushClient(int sockfd, struct sockaddr_in& addr);
 public:
+	FILE *GetLog() { return log; }
+	int GetNumberClinets() { return n_clients; };
+
+	static Server *Start(SessionSelector *sel, int port, FILE *f);
+
 	virtual ~Server();
 	virtual void Handle();
-	static Server *Start(SessionSelector *sel, int port, FILE *f);
+
 	void Send(FdObj *fdobj, const char *msg);
 	void SendAll(const char *msg, Client *except = 0);
-	FILE *GetLog() { return log; }
+
 	void CloseClientSession(Client *fdobj);
 };
 
@@ -48,6 +55,7 @@ class Client : public FdObj {
 
 	void SendInfoToChat(char *str);
 	void CleanBuffer();
+	void CheckLine();
 
 	void ProcessName();
 	void ProcessMsg();
