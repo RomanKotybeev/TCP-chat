@@ -32,6 +32,7 @@ void SessionSelector::Remove(FdObj *fdobj)
 {
 	int sockfd = fdobj->GetFd();
 	fdarr[sockfd] = 0;
+	close(sockfd);
 }
 
 void SessionSelector::Run()
