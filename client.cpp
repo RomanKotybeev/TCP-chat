@@ -68,8 +68,8 @@ void Client::ProcessName()
 		sprintf(msg, "%s%s\n", name, conn_again);
 		serv_master->Send(this, msg);
 		delete[] msg;
-		delete[] name;
-		name = 0;
+		serv_master->CloseClientSession(this);
+		buf_used = 0;
 		return;
 	}
 	SendInfoToChat(entered_chat);
@@ -108,8 +108,6 @@ void Client::SendInfoToChat(char *str)
 
 void Client::CleanBuffer()
 {
-	if (!name)
-		serv_master->CloseClientSession(this);
 	for (int i = 0; i < buf_used; i++)
 		buf[i] = 0;
 	buf_used = 0;
