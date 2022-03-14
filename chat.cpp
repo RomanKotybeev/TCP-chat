@@ -4,10 +4,6 @@
 #include "selector.hpp"
 #include "clientserver.hpp"
 
-void open_log()
-{
-}
-
 int main()
 {
 	int port = 6666;
