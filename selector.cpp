@@ -4,15 +4,15 @@
 
 #include "selector.hpp"
 
-SessionSelector::SessionSelector()
+void SessionSelector::InitFdArr(int sockfd)
 {
-	max_fd = -1;
-	fdarr = new FdObj*[INIT_ARR_SIZE];
+	fdarr = new FdObj*[sockfd * 2];
+	max_fd = sockfd;
 }
 
 void SessionSelector::CopyFds(int new_max_fd)
 {
-	FdObj **new_fdarr = new FdObj*[new_max_fd+1];
+	FdObj **new_fdarr = new FdObj*[new_max_fd * 2];
 	for (int i = 0; i <= new_max_fd; i++)
 		new_fdarr[i] = i <= max_fd ? fdarr[i] : 0; 
 	delete[] fdarr;
@@ -23,6 +23,8 @@ void SessionSelector::CopyFds(int new_max_fd)
 void SessionSelector::Add(FdObj *fdobj)
 {
 	int sockfd = fdobj->GetFd();
+	if (max_fd == -1)
+		InitFdArr(sockfd);
 	if (sockfd > max_fd)
 		CopyFds(sockfd);
 	fdarr[sockfd] = fdobj;
@@ -53,8 +55,7 @@ void SessionSelector::Run()
 			for (int i = 0; i <= max_fd; i++) {
 				if (fdarr[i] == 0)
 					continue;
-				bool r = FD_ISSET(i, &readfds);
-				if (r)
+				if (FD_ISSET(i, &readfds))
 					fdarr[i]->Handle();
 			}
 		}
