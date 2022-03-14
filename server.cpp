@@ -13,6 +13,7 @@ Server::Server(SessionSelector *sel, FILE *f,
 	, selector(sel)
 	, head(0)
 	, n_clients(0)
+	, names(0)
 	, log(f)
 { 
 	selector->Add(this);
@@ -65,6 +66,27 @@ Client *Server::PushClient(int sockfd, struct sockaddr_in& addr)
 	head = tmp;
 	n_clients++;
 	return c;
+}
+
+bool Server::InsertNameAndCheck(char *name)
+{
+	return InsertName(&names, name);
+}
+
+bool Server::InsertName(NameNode **root, char *name)
+{
+	if (*root == 0) {
+		*root = new NameNode(name, 0, 0);
+		return true;
+	}
+
+	int cmp = strcmp(names->name, name);
+	if (cmp == 0)
+		return false;
+	else if (cmp > 0)
+		return InsertName(&(*root)->left, name);
+	else
+		return InsertName(&(*root)->right, name);
 }
 
 void Server::CloseClientSession(Client *c)
