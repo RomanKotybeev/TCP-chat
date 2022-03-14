@@ -12,6 +12,7 @@ Server::Server(SessionSelector *sel, FILE *f,
 	: FdObj(sockfd, addr)
 	, selector(sel)
 	, head(0)
+	, n_clients(0)
 	, log(f)
 { 
 	selector->Add(this);
@@ -62,6 +63,7 @@ Client *Server::PushClient(int sockfd, struct sockaddr_in& addr)
 	tmp->client = c;
 	tmp->next = head;
 	head = tmp;
+	n_clients++;
 	return c;
 }
 
@@ -75,6 +77,7 @@ void Server::CloseClientSession(Client *c)
 			selector->Remove(tmp->client);
 			delete tmp->client;
 			delete tmp;
+			n_clients--;
 			return ;
 		}
 	}
