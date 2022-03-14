@@ -5,6 +5,7 @@
 
 char entered_chat[] = " has entered the chat";
 char leaved_chat[] = " has leaved the chat";
+char conn_again[] = " is used, try another name";
 char info_chat[] = "Online: ";
 
 char QUITLONG_CMD[] = "\\quit";
@@ -45,8 +46,10 @@ void Client::CheckLine()
 {
 	for (int i = 0; i < buf_used; i++) {
 		if (buf[i] == '\n') {
-			if (i > 0 && buf[i-1] == '\r')
+			if (i > 0 && buf[i-1] == '\r') {
+				buf[i] = 0;
 				i--;
+			}
 			buf[i] = 0;
 			buf_used = i;
 			return;
@@ -57,7 +60,18 @@ void Client::CheckLine()
 void Client::ProcessName()
 {
 	name = new char[buf_used];
+	name_len = buf_used;
 	memcpy(name, buf, buf_used);
+	bool unique = serv_master->InsertNameAndCheck(name);
+	if (!unique) {
+		char *msg = new char[sizeof(info_chat) + name_len + 1];
+		sprintf(msg, "%s%s\n", name, conn_again);
+		serv_master->Send(this, msg);
+		delete[] msg;
+		delete[] name;
+		name = 0;
+		return;
+	}
 	SendInfoToChat(entered_chat);
 }
 
@@ -94,6 +108,8 @@ void Client::SendInfoToChat(char *str)
 
 void Client::CleanBuffer()
 {
+	if (!name)
+		serv_master->CloseClientSession(this);
 	for (int i = 0; i < buf_used; i++)
 		buf[i] = 0;
 	buf_used = 0;
@@ -101,6 +117,6 @@ void Client::CleanBuffer()
 
 Client::~Client()
 {
-	if (name != 0)
+	if (name)
 		delete[] name;
 }
