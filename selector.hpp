@@ -12,7 +12,7 @@ class SessionSelector {
 	int max_fd;
 private:
 	void InitFdArr(int sockfd);
-	void CopyFds(int new_max_fd);
+	void ExpandFdArr(int new_max_fd);
 public:
 	SessionSelector() : max_fd(-1) {}
 	~SessionSelector() { delete[] fdarr; }

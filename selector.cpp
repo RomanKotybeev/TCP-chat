@@ -10,14 +10,13 @@ void SessionSelector::InitFdArr(int sockfd)
 	max_fd = sockfd;
 }
 
-void SessionSelector::CopyFds(int new_max_fd)
+void SessionSelector::ExpandFdArr(int new_max_fd)
 {
 	FdObj **new_fdarr = new FdObj*[new_max_fd * 2];
 	for (int i = 0; i <= new_max_fd; i++)
 		new_fdarr[i] = i <= max_fd ? fdarr[i] : 0; 
 	delete[] fdarr;
 	fdarr = new_fdarr;
-	max_fd = new_max_fd;
 }
 
 void SessionSelector::Add(FdObj *fdobj)
@@ -25,8 +24,11 @@ void SessionSelector::Add(FdObj *fdobj)
 	int sockfd = fdobj->GetFd();
 	if (max_fd == -1)
 		InitFdArr(sockfd);
-	if (sockfd > max_fd)
-		CopyFds(sockfd);
+	if (sockfd > max_fd) {
+		if (sockfd >= (int)sizeof(fdarr))
+			ExpandFdArr(sockfd);
+		max_fd = sockfd;
+	}
 	fdarr[sockfd] = fdobj;
 }
 
@@ -34,7 +36,6 @@ void SessionSelector::Remove(FdObj *fdobj)
 {
 	int sockfd = fdobj->GetFd();
 	fdarr[sockfd] = 0;
-	close(sockfd);
 }
 
 void SessionSelector::Run()
