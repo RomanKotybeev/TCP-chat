@@ -89,6 +89,20 @@ bool Server::InsertName(NameNode **root, char *name)
 		return InsertName(&(*root)->right, name);
 }
 
+void Server::DeleteName(NameNode *root, char *name)
+{
+	if (!root)
+		return;
+
+	int cmp = strcmp(root->name, name);
+	if (cmp == 0)
+		delete root;
+	else if (cmp > 0)
+		DeleteName(root->left, name);
+	else
+		DeleteName(root->right, name);
+}
+
 void Server::CloseClientSession(Client *c)
 {
 	Item **pp;
@@ -96,6 +110,7 @@ void Server::CloseClientSession(Client *c)
 		if ((*pp)->client == c) {
 			Item *tmp = *pp;
 			*pp = tmp->next;
+			DeleteName(names, c->name);
 			selector->Remove(tmp->client);
 			delete tmp->client;
 			delete tmp;
