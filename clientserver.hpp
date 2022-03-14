@@ -21,11 +21,20 @@ class Server : public FdObj {
 	};
 	Item *head;
 	int n_clients;
+	struct NameNode {
+		char *name;
+		NameNode *left;
+		NameNode *right;
+		NameNode(char *name_, NameNode *l, NameNode *r)
+			: name(name_), left(l), right(r) {}
+	};
+	NameNode *names;
 	FILE *log;
 
 	Server(SessionSelector *sel, FILE *f, int sockfd, struct sockaddr_in& addr);
 
 	Client *PushClient(int sockfd, struct sockaddr_in& addr);
+	bool InsertName(NameNode **root, char *name);
 public:
 	FILE *GetLog() { return log; }
 	int GetNumberClinets() { return n_clients; };
@@ -38,6 +47,8 @@ public:
 	void Send(FdObj *fdobj, const char *msg);
 	void SendAll(const char *msg, Client *except = 0);
 
+	bool InsertNameAndCheck(char *name);
+		
 	void CloseClientSession(Client *fdobj);
 };
 
@@ -46,6 +57,7 @@ public:
 /* --------------------------------------------------------------------------*/
 
 class Client : public FdObj {
+	friend class Server;
 	char *name;
 	int name_len;
 	char buf[BUF_LEN+1];
