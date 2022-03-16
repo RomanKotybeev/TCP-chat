@@ -7,7 +7,6 @@ OBJMODULES = selector.o server.o client.o
 
 chat: chat.cpp $(OBJMODULES)
 	$(CXX) $(CXXFLAGS) $^ -o $@
-	rm -f *.o
 
 run: chat
 	./chat

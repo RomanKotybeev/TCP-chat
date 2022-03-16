@@ -1,41 +1,24 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <algorithm>
 
 #include "selector.hpp"
-
-void SessionSelector::InitFdArr(int sockfd)
-{
-	fdarr = new FdObj*[sockfd * 2];
-	max_fd = sockfd;
-}
-
-void SessionSelector::ExpandFdArr(int new_max_fd)
-{
-	FdObj **new_fdarr = new FdObj*[new_max_fd * 2];
-	for (int i = 0; i <= new_max_fd; i++)
-		new_fdarr[i] = i <= max_fd ? fdarr[i] : 0; 
-	delete[] fdarr;
-	fdarr = new_fdarr;
-}
 
 void SessionSelector::Add(FdObj *fdobj)
 {
 	int sockfd = fdobj->GetFd();
-	if (max_fd == -1)
-		InitFdArr(sockfd);
-	if (sockfd > max_fd) {
-		if (sockfd >= (int)sizeof(fdarr))
-			ExpandFdArr(sockfd);
+	if (sockfd > max_fd)
 		max_fd = sockfd;
-	}
-	fdarr[sockfd] = fdobj;
+	fds.push_back(sockfd);
+	fdobj_map[sockfd] = fdobj;
 }
 
 void SessionSelector::Remove(FdObj *fdobj)
 {
 	int sockfd = fdobj->GetFd();
-	fdarr[sockfd] = 0;
+	fds.erase(std::remove(fds.begin(), fds.end(), sockfd), fds.end());
+	fdobj_map.erase(sockfd);
 }
 
 void SessionSelector::Run()
@@ -44,20 +27,17 @@ void SessionSelector::Run()
 	fd_set readfds;
 	for (;;) {
 		FD_ZERO(&readfds);
-		for (int i = 0; i <= max_fd; i++) {
-			if (fdarr[i] != 0) {
-				FD_SET(i, &readfds);
-			}
-		}
+		for (auto fd : fds)
+			FD_SET(fd, &readfds);
+		
 		sret = select(max_fd+1, &readfds, 0, 0, 0);
 		if (sret == -1) {
 			break;
-		} else if (sret > 0) {
-			for (int i = 0; i <= max_fd; i++) {
-				if (fdarr[i] == 0)
-					continue;
-				if (FD_ISSET(i, &readfds))
-					fdarr[i]->Handle();
+		}
+		if (sret > 0) {
+			for (auto fd : fds) {
+				if (FD_ISSET(fd, &readfds))
+					fdobj_map[fd]->Handle();
 			}
 		}
 	}

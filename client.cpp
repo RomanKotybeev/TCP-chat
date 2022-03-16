@@ -7,6 +7,7 @@ char entered_chat[] = " has entered the chat";
 char leaved_chat[] = " has leaved the chat";
 char conn_again[] = " is used, try another name";
 char info_chat[] = "Online: ";
+char read_err_msg[] = " couldn't read data\n";
 
 char QUITLONG_CMD[] = "\\quit";
 char QUITSHORT_CMD[] = "\\q";
@@ -18,13 +19,16 @@ void Client::Handle()
 	int fd = GetFd();
 	int n = read(fd, buf, sizeof(buf));
 	if (n < 0) {
-		fprintf(serv_master->GetLog(), "[%s] couldn't read data\n",
-				AddrToStr());
-		return ;
+		int len_char_addr = 15;
+		char *msg = new char[sizeof(read_err_msg) + len_char_addr + 4];
+		sprintf(msg, "[%s]%s", AddrToStr(), read_err_msg);
+		serv_master->WriteLog(msg);
+		delete[] msg;
+		return;
 	}
 	if (n == 0) {
 		serv_master->CloseClientSession(this);
-		return ;
+		return;
 	}
 	buf_used += n;
 
@@ -51,7 +55,7 @@ void Client::CheckLine()
 				i--;
 			}
 			buf[i] = 0;
-			buf_used = i;
+			buf_used = i + 1; // +1 for `\0`
 			return;
 		}
 	}
@@ -61,8 +65,8 @@ void Client::ProcessName()
 {
 	name = new char[buf_used];
 	name_len = buf_used;
-	memcpy(name, buf, buf_used);
-	bool unique = serv_master->InsertNameAndCheck(name);
+	strcpy(name, buf);
+	bool unique = serv_master->IsNameUnqiue(name);
 	if (!unique) {
 		char *msg = new char[sizeof(info_chat) + name_len + 1];
 		sprintf(msg, "%s%s\n", name, conn_again);
@@ -86,19 +90,21 @@ void Client::ProcessMsg()
 
 void Client::ProcessCmd()
 {
-	if (strcmp(buf, QUITSHORT_CMD) == 0 || strcmp(buf, QUITLONG_CMD) == 0) {
+	if (strcmp(buf, QUITSHORT_CMD) == 0 ||
+		strcmp(buf, QUITLONG_CMD) == 0
+	) {
 		SendInfoToChat(leaved_chat);
 		serv_master->CloseClientSession(this);
 	} else if (strcmp(buf, INFOCHAT_CMD) == 0) {
 		int n_digits = 3;
 		char *msg = new char[sizeof(info_chat) + n_digits + 2];
-		sprintf(msg, "%s%d\n", info_chat, serv_master->GetNumberClinets());
+		sprintf(msg, "%s%d\n", info_chat, serv_master->GetNClinets());
 		serv_master->Send(this, msg);
 		delete[] msg;
 	}
 }
 
-void Client::SendInfoToChat(char *str)
+void Client::SendInfoToChat(const char *str)
 {
 	char *msg = new char[name_len + sizeof(str) + 2];
 	sprintf(msg, "%s%s\n", name, str);

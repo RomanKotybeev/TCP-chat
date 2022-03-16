@@ -5,10 +5,11 @@
 #include <arpa/inet.h>
 
 class FdObj {
+protected:
 	int fd;
-	struct sockaddr_in addr;
+	sockaddr_in addr;
 public:
-	FdObj(int fd_, struct sockaddr_in& addr_)
+	FdObj(int fd_, sockaddr_in& addr_)
 		: fd(fd_)
 		, addr(addr_)
 	{} 
@@ -17,10 +18,7 @@ public:
 	virtual void Handle() = 0;
 
 	struct sockaddr_in GetAddr() const { return addr; }
-	int GetFd() const { return fd; }
-
-	void SetFd(int& _fd) { fd = _fd; }
-	void SetAddr(struct sockaddr_in& _addr) { addr = _addr; }
+	constexpr int GetFd() const { return fd; }
 
 	char *AddrToStr() { return inet_ntoa(addr.sin_addr); }
 };

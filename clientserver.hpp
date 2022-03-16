@@ -2,6 +2,8 @@
 #define CLIENT_HPP_ENTRY
 
 #include <stdio.h>
+#include <string.h>
+#include <set>
 
 #include "selector.hpp"
 
@@ -13,62 +15,44 @@ enum {
 
 class Client;
 
-// LinkedList
-struct Item {
-	Client *client;
-	Item *next;
-};
-
-// Binary Search Tree
-struct NameNode {
-	char *name;
-	NameNode *left;
-	NameNode *right;
-	NameNode(char *name_, NameNode *l, NameNode *r)
-		: name(name_), left(l), right(r) {}
+struct CharPtrComp {
+    bool operator()(const char *l, const char *r) const
+    {
+        return strcmp(l, r) > 0;
+    }
 };
 
 class Server : public FdObj {
 	SessionSelector *selector;
-	Item *head;
 	int n_clients;
-	NameNode *names;
+	std::set<char *, CharPtrComp> names;
 	FILE *log;
+private:
+	// Add a server to `fdobj_map` of SessionSelector.
+	// At this moment `max_fd` will be equal to the listen socket number.
+	Server(SessionSelector *sel, FILE *f, int sockfd, sockaddr_in& addr);
 
-	/* Add a server to `fdarr` of SessionSelector.
-	 * `max_fd` will be equal to the listen socket number.
-	 */
-	Server(SessionSelector *sel, FILE *f, int sockfd, struct sockaddr_in& addr);
-
-	/* Push to LinkedList */
-	Client *PushClient(int sockfd, struct sockaddr_in& addr);
-
-	/* Insert to BST. If BST has this name return false */
-	bool InsertName(NameNode **root, char *name);
-	void DeleteName(NameNode *root, char *name);
+	void DeleteName(char *name);
 public:
-	FILE *GetLog() { return log; }
-	int GetNumberClinets() { return n_clients; };
-
-	/* Start server. It initializes the listen socket */
+	// Start server. It initializes the listen socket.
+	// It returns nullptr if socket creation failed.
 	static Server *Start(SessionSelector *sel, int port, FILE *f);
 
-	virtual ~Server();
+	void WriteLog(const char *err_msg);
+	int GetNClinets() { return n_clients; };
 
-	/* Accept client. New Client will be created.
-	 * He also will be added to `fdarr` of SessionSelector
-	 */
+	~Server() = default;
+
+	// Accept client. It will create new `Client`.
 	virtual void Handle();
 
 	void Send(FdObj *fdobj, const char *msg);
 	void SendAll(const char *msg, Client *except = 0);
 
-	/* Client will call this function to insert name to BST */
-	bool InsertNameAndCheck(char *name);
+	// Client will call this function to insert name to `names`
+	bool IsNameUnqiue(char *name);
 		
-	/* Remove client from LinkedList.
-	 * Delete a node with his name.
-	 */
+	// Delete a node with his name.
 	void CloseClientSession(Client *fdobj);
 };
 
@@ -84,8 +68,8 @@ class Client : public FdObj {
 	int buf_used;
 
 	Server *serv_master;
-
-	void SendInfoToChat(char *str);
+private:
+	void SendInfoToChat(const char *str);
 	void CleanBuffer();
 	void CheckLine();
 
@@ -93,13 +77,13 @@ class Client : public FdObj {
 	void ProcessMsg();
 	void ProcessCmd();
 public:
-	Client(Server *s, int sockfd, struct sockaddr_in& addr)
+	Client(Server *s, int sockfd, sockaddr_in& addr)
 		: FdObj(sockfd, addr)
 		, buf_used(0)
 		, serv_master(s)
 	{}
-	virtual ~Client();
-	/* Initialize the name OR run a command OR send message */
+	~Client();
+	// Initialize the name OR run a command OR send a message.
 	virtual void Handle();
 };
 
