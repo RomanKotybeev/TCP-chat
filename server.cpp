@@ -62,10 +62,9 @@ void Server::Send(FdObj *fdobj, const char *msg)
 
 void Server::SendAll(const char *msg, Client *except)
 {
-	for (auto fd : selector->fds) {
-		FdObj *client = selector->fdobj_map[fd];
-		if (client != except && GetFd() != fd)
-			Send(client, msg);
+	for (auto client : selector->fdmap) {
+		if (client.second != except && GetFd() != client.first)
+			Send(client.second, msg);
 	}
 }
 
