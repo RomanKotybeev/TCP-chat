@@ -37,7 +37,7 @@ Server::Server(SessionSelector *sel, FILE *f,
 	, n_clients(0)
 	, log(f)
 { 
-	selector->Add(this);
+	selector->Add(this, sockfd);
 }
 
 void Server::Handle()
@@ -50,7 +50,7 @@ void Server::Handle()
 		return;
 	}
 	Client *client = new Client(this, sockfd, addr);
-	selector->Add(client);
+	selector->Add(client, sockfd);
 	n_clients++;
 	Send(client, ask_name_msg);
 }
