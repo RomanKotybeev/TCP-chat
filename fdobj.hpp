@@ -5,7 +5,6 @@
 #include <arpa/inet.h>
 
 class FdObj {
-protected:
 	int fd;
 	sockaddr_in addr;
 public:
