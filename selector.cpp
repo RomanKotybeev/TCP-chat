@@ -3,12 +3,12 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <algorithm>
+#include <vector>
 
 #include "selector.hpp"
 
-void SessionSelector::Add(FdObj *fdobj)
+void SessionSelector::Add(FdObj *fdobj, int sockfd)
 {
-	int sockfd = fdobj->GetFd();
 	if (sockfd > max_fd)
 		max_fd = sockfd;
 	fds.push_back(sockfd);
@@ -27,9 +27,12 @@ void SessionSelector::Run()
 	int sret;
 	fd_set readfds;
 	for (;;) {
+		std::vector<int>::size_type i;
+		std::vector<int>::size_type size = fds.size();
+
 		FD_ZERO(&readfds);
-		for (auto fd : fds)
-			FD_SET(fd, &readfds);
+		for (i = 0; i < size; i++)
+			FD_SET(fds[i], &readfds);
 		
 		sret = select(max_fd+1, &readfds, 0, 0, 0);
 		if (sret == -1) {
@@ -39,10 +42,9 @@ void SessionSelector::Run()
 				break;
 		}
 		if (sret > 0) {
-			for (auto fd : fds) {
-				if (FD_ISSET(fd, &readfds))
-					fdobj_map[fd]->Handle();
-			}
+			for (i = 0; i < size; i++)
+				if (FD_ISSET(fds[i], &readfds))
+					fdobj_map[fds[i]]->Handle();
 		}
 	}
 }
