@@ -7,19 +7,17 @@
 
 #include "selector.hpp"
 
-void SessionSelector::Add(FdObj *fdobj, int sockfd)
+void SessionSelector::Add(FdObj *fdobj, int fd)
 {
-	if (sockfd > max_fd)
-		max_fd = sockfd;
-	fds.push_back(sockfd);
-	fdobj_map[sockfd] = fdobj;
+	if (fd > max_fd)
+		max_fd = fd;
+	fdmap[fd] = fdobj;
 }
 
 void SessionSelector::Remove(FdObj *fdobj)
 {
-	int sockfd = fdobj->GetFd();
-	fds.erase(std::remove(fds.begin(), fds.end(), sockfd), fds.end());
-	fdobj_map.erase(sockfd);
+	int fd = fdobj->GetFd();
+	fd_to_remove.push_back(fd);
 }
 
 void SessionSelector::Run()
@@ -27,8 +25,8 @@ void SessionSelector::Run()
 	int sret;
 	fd_set readfds;
 	for (;;) {
-		for (int fd : fds)
-			FD_SET(fd, &readfds);
+		for (auto const& fdobj : fdmap)
+			FD_SET(fdobj.first, &readfds);
 		
 		sret = select(max_fd+1, &readfds, 0, 0, 0);
 		if (sret == -1) {
@@ -38,9 +36,17 @@ void SessionSelector::Run()
 				break;
 		}
 		if (sret > 0) {
-			for (int fd : fds)
-				if (FD_ISSET(fd, &readfds))
-					fdobj_map[fd]->Handle();
+			for (auto const& fdobj : fdmap)
+				if (FD_ISSET(fdobj.first, &readfds))
+					fdobj.second->Handle();
 		}
+
+		for (int fd : fd_to_remove) {
+			fdmap.erase(fd);
+			if (fd == max_fd)
+				max_fd = fdmap.rbegin()->first;
+		}
+		if (fd_to_remove.size() > 0)
+			fd_to_remove.clear();
 	}
 }
