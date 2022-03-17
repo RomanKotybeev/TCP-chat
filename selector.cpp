@@ -1,6 +1,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <errno.h>
 #include <algorithm>
 
 #include "selector.hpp"
@@ -32,7 +33,10 @@ void SessionSelector::Run()
 		
 		sret = select(max_fd+1, &readfds, 0, 0, 0);
 		if (sret == -1) {
-			break;
+			if (errno == EINTR)
+				continue;
+			else
+				break;
 		}
 		if (sret > 0) {
 			for (auto fd : fds) {
