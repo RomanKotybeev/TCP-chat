@@ -8,9 +8,8 @@
 #include "selector.hpp"
 
 enum {
-	BUF_LEN = 1024,
-	QLEN_LISTEN = 16,
-	MAX_CLINETS = 100,
+	BUF_LEN = 512,
+	QLEN_LISTEN = 8,
 };
 
 class Client;
@@ -18,7 +17,7 @@ class Client;
 struct CharPtrComp {
     bool operator()(const char *l, const char *r) const
     {
-        return strcmp(l, r) > 0;
+        return strcmp(r, l) > 0;
     }
 };
 
