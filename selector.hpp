@@ -1,7 +1,7 @@
 #ifndef SESSION_SELECTOR_HPP_ENTRY
 #define SESSION_SELECTOR_HPP_ENTRY
 #include <map>
-#include <list>
+#include <vector>
 
 #include "fdobj.hpp"
 
@@ -11,8 +11,8 @@ enum {
 
 class SessionSelector {
 	friend class Server;
-	std::map<int, FdObj*> fdobj_map;
-	std::list<int> fds;
+	std::map<int, FdObj *> fdmap;
+	std::vector<int> fd_to_remove;
 	int max_fd;
 public:
 	SessionSelector() : max_fd(-1) {}
