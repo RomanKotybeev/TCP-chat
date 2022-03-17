@@ -62,9 +62,9 @@ void Server::Send(FdObj *fdobj, const char *msg)
 
 void Server::SendAll(const char *msg, Client *except)
 {
-	for (auto sockfd : selector->fds) {
-		FdObj *client = selector->fdobj_map[sockfd];
-		if (client != except && sockfd != fd)
+	for (auto fd : selector->fds) {
+		FdObj *client = selector->fdobj_map[fd];
+		if (client != except && GetFd() != fd)
 			Send(client, msg);
 	}
 }
