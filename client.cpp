@@ -82,12 +82,12 @@ void Client::ProcessMsg()
 
 void Client::ProcessCmd()
 {
-	if (strcmp(buf + buf_begin, QUITSHORT_CMD) == 0 ||
-		strcmp(buf + buf_begin, QUITLONG_CMD) == 0
+	if (strcmp(buf, QUITSHORT_CMD) == 0 ||
+		strcmp(buf, QUITLONG_CMD) == 0
 	) {
 		SendInfoToChat(leaved_chat);
 		serv_master->CloseClientSession(this);
-	} else if (strcmp(buf + buf_begin, INFOCHAT_CMD) == 0) {
+	} else if (strcmp(buf, INFOCHAT_CMD) == 0) {
 		int n_digits = 3;
 		char *msg = new char[sizeof(info_chat) + n_digits + 2];
 		sprintf(msg, "%s%d\n", info_chat, serv_master->GetNClinets());
