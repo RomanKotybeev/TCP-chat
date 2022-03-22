@@ -83,7 +83,7 @@ void Client::ProcessMsg()
 void Client::ProcessCmd()
 {
 	if (strcmp(buf, QUITSHORT_CMD) == 0 ||
-		strcmp(buf, QUITLONG_CMD) == 0
+	    strcmp(buf, QUITLONG_CMD) == 0
 	) {
 		SendInfoToChat(leaved_chat);
 		serv_master->CloseClientSession(this);
